@@ -21,3 +21,5 @@
 # good ol .env file for local dev
 .env
 
+# Test data and test results for the go test command
+*/testdata/*
