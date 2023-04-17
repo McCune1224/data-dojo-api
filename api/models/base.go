@@ -1,28 +1,33 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 // Base model for all games
 type Game struct {
 	gorm.Model
-	Name        string
-	ReleaseDate string
+	Name        string `gorm:"uniqueIndex"`
+	ReleaseDate time.Time
 	Developer   string
 	Publisher   string
-	Genre       string
-	Platform    string
 
-	// Relationships
 	Characters []Character
 }
 
-// Base model for all characters
+// Character belongs to a Game and has many Moves
 type Character struct {
 	gorm.Model
-	Name  string
+	Name  string `gorm:"uniqueIndex"`
 	Moves []Move
+
+	Game   Game
+	GameID uint
 }
 
+// Move belongs to a Character
 type Move struct {
 	gorm.Model
 	Name      string
@@ -35,5 +40,6 @@ type Move struct {
 	OnCounter string
 
 	// Relationships
+	Character   Character
 	CharacterID uint
 }

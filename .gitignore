@@ -15,7 +15,8 @@
 # vendor/
 
 # Local Dev tooling for server refresh on file change, don't need in prod
-/tmp/ 
+/tmp/* 
+*/tmp/*
 .air.toml
 
 # good ol .env file for local dev

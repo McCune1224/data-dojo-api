@@ -1,55 +1,65 @@
-package internal
+package collector
 
 import (
 	"encoding/json"
 	"fmt"
-	"log"
-	"os"
+	"net/http"
 	"testing"
 
 	"github.com/mccune1224/data-dojo/api/models"
 )
 
-func TestStriveScraper(t *testing.T) {
-	testQueries := []string{
-		"Ky Kiske",
-		"Sol Badguy",
-		"May",
-		"Millia Rage",
-		"Potemkin",
-		"Zato-1",
+func TestStriveQuerySerach(t *testing.T) {
+	testQueries := []struct {
+		Query               string
+		ExptectedStatusCode int
+		MoveListResponse    []models.Move
+	}{
+		{
+			Query:               "Sol Badguy",
+			ExptectedStatusCode: 200,
+		},
+		{
+			Query:               "Happy Chaos",
+			ExptectedStatusCode: 200,
+		},
+		{
+			Query:               "Sin Kiske",
+			ExptectedStatusCode: 200,
+		},
 	}
-	for _, query := range testQueries {
-		queryResult, err := StriveScraper(query)
+	for _, test := range testQueries {
+		var striveQuery GuiltyGearStriveQuery
+		err := striveQuery.Fetch(test.Query)
 		if err != nil {
 			t.Error(err)
 		}
-		if len(queryResult.Cargoquery) == 0 {
-			t.Error("queryResult is empty")
-		}
-		newCharacter := models.Character{
-			Name: query,
-		}
-		for _, move := range queryResult.Cargoquery {
-			newMove := models.Move{
-				Name:     move.Title.Name,
-				Input:    move.Title.Input,
-				Startup:  move.Title.Startup,
-				Active:   move.Title.Active,
-				Recovery: move.Title.Recovery,
-				OnBlock:  move.Title.OnBlock,
-				OnHit:    move.Title.OnHit,
-			}
-			newCharacter.Moves = append(newCharacter.Moves, newMove)
+
+		if len(striveQuery.Moves) == 0 {
+			t.Error("No moves found")
 		}
 
-		// write to file
-		newFile, err := os.Create(fmt.Sprintf("%s.json", query))
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer newFile.Close()
-		json.NewEncoder(newFile).Encode(newCharacter)
+		fmt.Println(striveQuery)
+	}
+}
 
+func TestURL(t *testing.T) {
+	url := "https://dustloop.com/wiki/api.php?action=cargoquery&tables=MoveData_GGST&fields=chara,input,name,startup,active,recovery,onBlock,onHit,&where=chara=%22I-No%22&format=json"
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	req.Header.Add("Content-Type", "application/json")
+	if err != nil {
+		t.Error(err)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Error(err)
+	}
+	defer resp.Body.Close()
+
+	var dustloopQuery DustloopQuery
+	err = json.NewDecoder(resp.Body).Decode(&dustloopQuery)
+	if err != nil {
+		t.Fatal(err)
 	}
 }

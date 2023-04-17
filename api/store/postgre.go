@@ -1,6 +1,7 @@
 package store
 
 import (
+	"github.com/mccune1224/data-dojo/api/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -22,6 +23,10 @@ func Connect(dns string, autoMigrate bool) error {
 
 	// Auto-migrate models
 	if autoMigrate {
+		err = DB.AutoMigrate(
+			&models.Game{},
+			&models.Character{},
+			&models.Move{})
 	}
 
 	if err != nil {

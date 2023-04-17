@@ -18,6 +18,10 @@ func BasicRoutes(app *fiber.App) {
 	app.Get("/ping", func(c *fiber.Ctx) error {
 		return c.SendString("pong")
 	})
+
+    app.Get("/test", func(c *fiber.Ctx) error {
+        return c.SendString("test")
+    })
 }
 
 func GameRoutes(app *fiber.App) {
