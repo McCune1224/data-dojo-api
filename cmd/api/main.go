@@ -22,7 +22,7 @@ func getPort() string {
 
 func main() {
 	// Spin up DB
-	dbConnectErr := store.Connect(os.Getenv("DB_URL"), true)
+	dbConnectErr := store.Connect(os.Getenv("DB_URL"), false)
 	if dbConnectErr != nil {
 		panic(dbConnectErr)
 	}
@@ -39,7 +39,7 @@ func main() {
 
 	// Add routes to app
 	router.BasicRoutes(app)
-	router.GameRoutes(app)
+	router.APIRoutes(app)
 
 	app.Listen(getPort())
 }

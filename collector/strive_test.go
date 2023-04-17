@@ -6,14 +6,14 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/mccune1224/data-dojo/api/models"
+	"github.com/mccune1224/data-dojo/api/model"
 )
 
 func TestStriveQuerySerach(t *testing.T) {
 	testQueries := []struct {
 		Query               string
 		ExptectedStatusCode int
-		MoveListResponse    []models.Move
+		MoveListResponse    []model.Move
 	}{
 		{
 			Query:               "Sol Badguy",

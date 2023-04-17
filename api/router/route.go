@@ -18,15 +18,18 @@ func BasicRoutes(app *fiber.App) {
 	app.Get("/ping", func(c *fiber.Ctx) error {
 		return c.SendString("pong")
 	})
-
-    app.Get("/test", func(c *fiber.Ctx) error {
-        return c.SendString("test")
-    })
 }
 
-func GameRoutes(app *fiber.App) {
-	games := app.Group("/games")
+func APIRoutes(app *fiber.App) {
+	api := app.Group("/api")
 
-	// Get all games in the database
+	// Games
+	games := api.Group("/games")
 	games.Get("/", handler.GetAllGames)
+	games.Get("/:game", handler.GetGameByID)
+
+	// Characters
+	characters := games.Group(":gameID/characters")
+	characters.Get("/", handler.GetAllCharacters)
+    characters.Get("/:id", handler.GetCharacterByID)
 }

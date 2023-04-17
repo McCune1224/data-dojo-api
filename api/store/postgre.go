@@ -1,7 +1,7 @@
 package store
 
 import (
-	"github.com/mccune1224/data-dojo/api/models"
+	"github.com/mccune1224/data-dojo/api/model"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -10,7 +10,7 @@ import (
 var DB *gorm.DB
 
 // Connect to given database with dns string as well as a flag for auto-migration
-// of models used in the API
+// of model used in the API
 func Connect(dns string, autoMigrate bool) error {
 	var err error
 	DB, err = gorm.Open(postgres.Open(dns), &gorm.Config{
@@ -21,12 +21,12 @@ func Connect(dns string, autoMigrate bool) error {
 		return err
 	}
 
-	// Auto-migrate models
+	// Auto-migrate model
 	if autoMigrate {
 		err = DB.AutoMigrate(
-			&models.Game{},
-			&models.Character{},
-			&models.Move{})
+			&model.Game{},
+			&model.Character{},
+			&model.Move{})
 	}
 
 	if err != nil {

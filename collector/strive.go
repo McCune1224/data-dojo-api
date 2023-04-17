@@ -8,13 +8,13 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/mccune1224/data-dojo/api/models"
+	"github.com/mccune1224/data-dojo/api/model"
 	"github.com/mccune1224/data-dojo/api/store"
 )
 
 type GuiltyGearStriveQuery struct {
 	Character string        `json:"character"`
-	Moves     []models.Move `json:"moves"`
+	Moves     []model.Move `json:"moves"`
 }
 
 // Fetch the moves for a character from DustLoop
@@ -75,7 +75,7 @@ func (ggstq *GuiltyGearStriveQuery) Write(dsn string) error {
 	}
 
 	// // check if game exists first
-	// ggst := models.Game{
+	// ggst := model.Game{
 	// 	Name:        "Guilty Gear Strive",
 	// 	Developer:   "Arc System Works",
 	// 	Publisher:   "Bandai Namco Entertainment",
@@ -87,14 +87,14 @@ func (ggstq *GuiltyGearStriveQuery) Write(dsn string) error {
 	// 	return gameCreate.Error
 	// }
 
-	game := models.Game{}
+	game := model.Game{}
 	err = store.DB.Where("name = ?", "Guilty Gear Strive").First(&game).Error
 	if err != nil {
 		return err
 	}
 
 	// insert character into db
-	characterEntry := models.Character{
+	characterEntry := model.Character{
 		Name:   ggstq.Character,
 		Moves:  ggstq.Moves,
 		GameID: game.ID,
