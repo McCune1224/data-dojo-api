@@ -15,7 +15,7 @@ import (
 
 func testApplication() *fiber.App {
 	// Load .env file
-	godotenv.Load("../../cmd/api/.env", ".env")
+	godotenv.Load("../../cmd/api/.env", "./.env")
 	app := fiber.New()
 	// Spin up DB
 	dbConnectErr := store.Connect(os.Getenv("DB_URL"), false)
