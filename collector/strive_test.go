@@ -2,7 +2,6 @@ package collector
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"testing"
 
@@ -39,7 +38,6 @@ func TestStriveQuerySerach(t *testing.T) {
 			t.Error("No moves found")
 		}
 
-		fmt.Println(striveQuery)
 	}
 }
 
