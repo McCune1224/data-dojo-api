@@ -11,15 +11,11 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/mccune1224/data-dojo/api/store"
-
 )
 
 func testApplication() *fiber.App {
 	// Load .env file
-    err := godotenv.Load("../../cmd/api/.env", ".env")
-    if err != nil {
-        panic(err)
-    }
+	godotenv.Load("../../cmd/api/.env", ".env")
 	app := fiber.New()
 	// Spin up DB
 	dbConnectErr := store.Connect(os.Getenv("DB_URL"), false)
