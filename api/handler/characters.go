@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/mccune1224/data-dojo/api/model"
+	"github.com/mccune1224/data-dojo/api/store"
 	"github.com/mccune1224/data-dojo/api/store/queries"
 	"gorm.io/gorm"
 )
@@ -14,6 +15,18 @@ type CharacterResponse struct {
 	Name   string         `json:"name"`
 	Moves  []MoveResponse `json:"moves"`
 	GameID uint           `json:"gameID"`
+}
+
+func (cr *CharacterResponse) ModelToResponse(c model.Character) {
+	cr.ID = c.ID
+	cr.Name = c.Name
+	cr.GameID = c.GameID
+
+	for i := range c.Moves {
+		move := MoveResponse{}
+		move.ModelToResponse(c.Moves[i])
+		cr.Moves = append(cr.Moves, move)
+	}
 }
 
 func GetAllCharacters(c *fiber.Ctx) error {
@@ -60,6 +73,7 @@ func GetCharacterByID(c *fiber.Ctx) error {
 			"error": "Please provide a game ID",
 		})
 	}
+
 	characterID := c.Params("id")
 	if characterID == "" {
 		return c.Status(400).JSON(fiber.Map{
@@ -68,7 +82,7 @@ func GetCharacterByID(c *fiber.Ctx) error {
 	}
 
 	dbChar := model.Character{}
-	err := queries.CharacterByID(characterID, &dbChar)
+    err := store.DB.Where("id = ? and game_id = ?", characterID, gameID).First(&dbChar).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return c.Status(404).JSON(fiber.Map{

@@ -38,7 +38,6 @@ func CharacterByID(id string, character *model.Character) error {
 }
 
 func CharacterMoveByID(id string, character *model.Character) error {
-
 	// Get their moves
 	err := store.DB.Model(&character).Association("Moves").Find(&character.Moves)
 	if err != nil {
@@ -48,10 +47,10 @@ func CharacterMoveByID(id string, character *model.Character) error {
 }
 
 func GetCharacterMoves(character *model.Character) error {
-    // Get their moves
-    err := store.DB.Model(&character).Association("Moves").Find(&character.Moves)
-    if err != nil {
-        return err
-    }
-    return nil
+	// Get their moves
+	err := store.DB.Model(&character).Association("Moves").Find(&character.Moves)
+	if err != nil {
+		return err
+	}
+	return nil
 }

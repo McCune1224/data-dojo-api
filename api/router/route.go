@@ -7,14 +7,17 @@ import (
 
 // BasicRoutes adds routes that are not specific to a game to the app
 func BasicRoutes(app *fiber.App) {
+	// Root route
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Hello, World!")
 	})
 
-	app.Get("/health", func(c *fiber.Ctx) error {
-		return c.SendString("OK")
+	// Helper for showing all routes
+	app.Get("/routes", func(c *fiber.Ctx) error {
+		return c.JSON(app.GetRoutes())
 	})
 
+	// Helper for checking if the server is up
 	app.Get("/ping", func(c *fiber.Ctx) error {
 		return c.SendString("pong")
 	})
@@ -31,5 +34,10 @@ func APIRoutes(app *fiber.App) {
 	// Characters
 	characters := games.Group(":gameID/characters")
 	characters.Get("/", handler.GetAllCharacters)
-    characters.Get("/:id", handler.GetCharacterByID)
+	characters.Get("/:id", handler.GetCharacterByID)
+
+	// Moves
+	moves := characters.Group(":characterID/moves")
+	moves.Get("/", handler.GetAllMoves)
+	moves.Get("/:id", handler.GetMoveByID)
 }

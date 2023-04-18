@@ -18,6 +18,7 @@
 /tmp/* 
 */tmp/*
 tmp/*
+tmp/
 .air.toml
 
 # good ol .env file for local dev
