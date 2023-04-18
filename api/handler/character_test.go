@@ -9,7 +9,9 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
+	_ "github.com/joho/godotenv/autoload"
 	"github.com/mccune1224/data-dojo/api/store"
+
 )
 
 func testApplication() *fiber.App {
