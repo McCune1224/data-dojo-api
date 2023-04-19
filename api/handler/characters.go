@@ -98,13 +98,13 @@ func GetCharacterByID(c *fiber.Ctx) error {
 	})
 }
 
-func SearchCharacter(c *fiber.Ctx) error {
+func SearchCharacters(c *fiber.Ctx) error {
 	type characterResponse struct {
 		ID     uint   `json:"id"`
 		Name   string `json:"name"`
 		GameID uint   `json:"game_id"`
 	}
-	requestQuery := c.Params("term")
+	requestQuery := c.Query("name")
 	dbResults := []model.Character{}
 	err := store.DB.
 		// Forgive me father for I have sinned and used ILIKE

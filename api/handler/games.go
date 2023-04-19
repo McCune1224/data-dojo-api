@@ -73,11 +73,18 @@ func GetGameByID(c *fiber.Ctx) error {
 	})
 }
 
+// SearchGames will expect a query paramter called "game" to
+// use in an ILIKE search for games of similar pattern
 func SearchGames(c *fiber.Ctx) error {
-	requestQuery := c.Params("term")
+	requestQuery := c.Query("name")
 	if requestQuery == "" {
 		return c.Status(400).JSON(fiber.Map{
 			"error": "Please provide a search term",
+		})
+	}
+	if len(requestQuery) > 50 {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "Query has limit of 50 characters",
 		})
 	}
 	dbResults := []model.Game{}
@@ -113,6 +120,7 @@ func SearchGames(c *fiber.Ctx) error {
 	}
 	return c.JSON(fiber.Map{
 		"games": gamesResponse,
+		"query": requestQuery,
 	})
 
 }

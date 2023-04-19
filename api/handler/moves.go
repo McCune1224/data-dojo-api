@@ -103,3 +103,39 @@ func GetMoveByID(c *fiber.Ctx) error {
 		"move": responseMove,
 	})
 }
+
+func SearchMoves(c *fiber.Ctx) error {
+	movesResponse := []MoveResponse{}
+	requestQuery := c.Query("name")
+	if requestQuery == "" {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "No search query provided",
+		})
+	}
+
+	if len(requestQuery) > 20 {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "Search query too long (max 20 characters)",
+		})
+	}
+
+	// Query DB for all moves with characterID
+	dbMoves := []model.Move{}
+	err := store.DB.
+		Where("name ILIKE ?", "%"+requestQuery+"%").
+		Or("input ILIKE ?", "%"+requestQuery+"%").
+		Find(&dbMoves).Error
+
+	if err != nil {
+		handleNotFound(c, err)
+	}
+	for i := range dbMoves {
+		newMoveResponse := MoveResponse{}
+		newMoveResponse.ModelToResponse(dbMoves[i])
+		movesResponse = append(movesResponse, newMoveResponse)
+	}
+
+	return c.JSON(fiber.Map{
+		"moves": movesResponse,
+	})
+}
