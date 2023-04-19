@@ -29,12 +29,14 @@ func APIRoutes(app *fiber.App) {
 	// Games
 	games := api.Group("/games")
 	games.Get("/", handler.GetAllGames)
-	games.Get("/:game", handler.GetGameByID)
+	games.Get("/:id", handler.GetGameByID)
+	games.Get("/search/:query", handler.SearchGames)
 
 	// Characters
 	characters := games.Group(":gameID/characters")
 	characters.Get("/", handler.GetAllCharacters)
 	characters.Get("/:id", handler.GetCharacterByID)
+	characters.Get("/search/:query", handler.SearchCharacter)
 
 	// Moves
 	moves := characters.Group(":characterID/moves")

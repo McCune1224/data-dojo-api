@@ -6,30 +6,28 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/mccune1224/data-dojo/api/model"
 	"github.com/mccune1224/data-dojo/api/store"
-	"github.com/mccune1224/data-dojo/api/store/queries"
 	"gorm.io/gorm"
 )
 
-type CharacterResponse struct {
-	ID     uint           `json:"id"`
-	Name   string         `json:"name"`
-	Moves  []MoveResponse `json:"moves"`
-	GameID uint           `json:"gameID"`
-}
-
-func (cr *CharacterResponse) ModelToResponse(c model.Character) {
-	cr.ID = c.ID
-	cr.Name = c.Name
-	cr.GameID = c.GameID
-
-	for i := range c.Moves {
-		move := MoveResponse{}
-		move.ModelToResponse(c.Moves[i])
-		cr.Moves = append(cr.Moves, move)
+func handleNotFound(c *fiber.Ctx, err error) error {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "No records found",
+		})
+	} else {
+		return c.Status(500).JSON(fiber.Map{
+			"error":  "Internal server error",
+			"reason": err.Error(),
+		})
 	}
 }
 
 func GetAllCharacters(c *fiber.Ctx) error {
+	type characterResponse struct {
+		ID     uint   `json:"id"`
+		Name   string `json:"name"`
+		GameID uint   `json:"game_id"`
+	}
 	gameID := c.Params("gameID")
 	if gameID == "" {
 		return c.Status(400).JSON(fiber.Map{
@@ -38,23 +36,18 @@ func GetAllCharacters(c *fiber.Ctx) error {
 	}
 
 	dbChars := []model.Character{}
-	err := queries.AllCharactersByID(gameID, &dbChars)
+	err := store.DB.
+		Where("game_id = ?", gameID).
+		Find(&dbChars).Error
+
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return c.Status(404).JSON(fiber.Map{
-				"error": "No characters found for game " + gameID,
-			})
-		} else {
-			return c.Status(500).JSON(fiber.Map{
-				"error":  "Internal server error",
-				"reason": err.Error(),
-			})
-		}
+		return handleNotFound(c, err)
 	}
 
-	chars := []CharacterResponse{}
+	charResponse := []characterResponse{}
 	for i := range dbChars {
-		chars = append(chars, CharacterResponse{
+
+		charResponse = append(charResponse, characterResponse{
 			ID:     dbChars[i].ID,
 			Name:   dbChars[i].Name,
 			GameID: dbChars[i].GameID,
@@ -62,31 +55,67 @@ func GetAllCharacters(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"characters": chars,
+		"characters": charResponse,
 	})
 }
 
 func GetCharacterByID(c *fiber.Ctx) error {
-	gameID := c.Params("gameID")
-	if gameID == "" {
+	type characterResponse struct {
+		ID     uint   `json:"id"`
+		Name   string `json:"name"`
+		GameID uint   `json:"game_id"`
+	}
+	gameIDParam := c.Params("gameID")
+	if gameIDParam == "" {
 		return c.Status(400).JSON(fiber.Map{
 			"error": "Please provide a game ID",
 		})
 	}
 
-	characterID := c.Params("id")
-	if characterID == "" {
+	characterIDParam := c.Params("id")
+	if characterIDParam == "" {
 		return c.Status(400).JSON(fiber.Map{
 			"error": "Please provide a character ID",
 		})
 	}
 
 	dbChar := model.Character{}
-    err := store.DB.Where("id = ? and game_id = ?", characterID, gameID).First(&dbChar).Error
+	err := store.DB.Where("id = ? and game_id = ?", characterIDParam, gameIDParam).First(&dbChar).Error
+	if err != nil {
+		return handleNotFound(c, err)
+	}
+
+	return c.JSON(fiber.Map{
+		"character": struct {
+			ID     uint   `json:"id"`
+			Name   string `json:"name"`
+			GameID uint   `json:"game_id"`
+		}{
+			ID:     dbChar.ID,
+			Name:   dbChar.Name,
+			GameID: dbChar.GameID,
+		},
+	})
+}
+
+func SearchCharacter(c *fiber.Ctx) error {
+	type characterResponse struct {
+		ID     uint   `json:"id"`
+		Name   string `json:"name"`
+		GameID uint   `json:"game_id"`
+	}
+	requestQuery := c.Params("query")
+	dbResults := []model.Character{}
+	err := store.DB.
+		// Forgive me father for I have sinned and used ILIKE
+		// Shoutout to the postgresql gods for making this possible
+		Where("name ILIKE ?", "%"+requestQuery+"%").
+		Find(&dbResults).Error
+
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return c.Status(404).JSON(fiber.Map{
-				"error": "No character found with ID " + characterID,
+				"error": "No characters found with query " + requestQuery,
 			})
 		} else {
 			return c.Status(500).JSON(fiber.Map{
@@ -96,33 +125,17 @@ func GetCharacterByID(c *fiber.Ctx) error {
 		}
 	}
 
-	err = queries.GetCharacterMoves(&dbChar)
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"error":  "Internal server error",
-			"reason": err.Error(),
+	charactersResponse := []characterResponse{}
+	for i := range dbResults {
+		charactersResponse = append(charactersResponse, characterResponse{
+			ID:     dbResults[i].ID,
+			Name:   dbResults[i].Name,
+			GameID: dbResults[i].GameID,
 		})
 	}
 
-	movesResponse := []MoveResponse{}
-	for i := range dbChar.Moves {
-		movesResponse = append(movesResponse, MoveResponse{
-			ID:       dbChar.Moves[i].ID,
-			Name:     dbChar.Moves[i].Name,
-			Input:    dbChar.Moves[i].Input,
-			Startup:  dbChar.Moves[i].Startup,
-			Active:   dbChar.Moves[i].Active,
-			Recovery: dbChar.Moves[i].Recovery,
-			OnBlock:  dbChar.Moves[i].OnBlock,
-			OnHit:    dbChar.Moves[i].OnHit,
-		})
-	}
 	return c.JSON(fiber.Map{
-		"character": CharacterResponse{
-			ID:     dbChar.ID,
-			Name:   dbChar.Name,
-			GameID: dbChar.GameID,
-			Moves:  movesResponse,
-		},
+		"characters": charactersResponse,
 	})
+
 }
