@@ -58,7 +58,6 @@ func GetGameByID(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{
 			"message": "Could not find game " + gameParam,
 			"error":   dbErr.Error(),
-			"param":   gameParam,
 		})
 	}
 
