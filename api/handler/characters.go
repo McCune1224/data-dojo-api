@@ -104,7 +104,7 @@ func SearchCharacter(c *fiber.Ctx) error {
 		Name   string `json:"name"`
 		GameID uint   `json:"game_id"`
 	}
-	requestQuery := c.Params("query")
+	requestQuery := c.Params("term")
 	dbResults := []model.Character{}
 	err := store.DB.
 		// Forgive me father for I have sinned and used ILIKE

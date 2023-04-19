@@ -74,7 +74,7 @@ func GetGameByID(c *fiber.Ctx) error {
 }
 
 func SearchGames(c *fiber.Ctx) error {
-	requestQuery := c.Params("query")
+	requestQuery := c.Params("term")
 	if requestQuery == "" {
 		return c.Status(400).JSON(fiber.Map{
 			"error": "Please provide a search term",
