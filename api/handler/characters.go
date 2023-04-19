@@ -1,33 +1,19 @@
 package handler
 
 import (
-	"errors"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/mccune1224/data-dojo/api/model"
 	"github.com/mccune1224/data-dojo/api/store"
-	"gorm.io/gorm"
 )
 
-func handleNotFound(c *fiber.Ctx, err error) error {
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return c.Status(404).JSON(fiber.Map{
-			"error": "No records found",
-		})
-	} else {
-		return c.Status(500).JSON(fiber.Map{
-			"error":  "Internal server error",
-			"reason": err.Error(),
-		})
-	}
+// JSON response for a character
+type characterResponse struct {
+	ID     uint   `json:"id"`
+	Name   string `json:"name"`
+	GameID uint   `json:"game_id"`
 }
 
 func GetAllCharacters(c *fiber.Ctx) error {
-	type characterResponse struct {
-		ID     uint   `json:"id"`
-		Name   string `json:"name"`
-		GameID uint   `json:"game_id"`
-	}
 	gameID := c.Params("gameID")
 	if gameID == "" {
 		return c.Status(400).JSON(fiber.Map{
@@ -60,11 +46,6 @@ func GetAllCharacters(c *fiber.Ctx) error {
 }
 
 func GetCharacterByID(c *fiber.Ctx) error {
-	type characterResponse struct {
-		ID     uint   `json:"id"`
-		Name   string `json:"name"`
-		GameID uint   `json:"game_id"`
-	}
 	gameIDParam := c.Params("gameID")
 	if gameIDParam == "" {
 		return c.Status(400).JSON(fiber.Map{
@@ -80,7 +61,9 @@ func GetCharacterByID(c *fiber.Ctx) error {
 	}
 
 	dbChar := model.Character{}
-	err := store.DB.Where("id = ? and game_id = ?", characterIDParam, gameIDParam).First(&dbChar).Error
+	err := store.DB.
+		Where("id = ? and game_id = ?", characterIDParam, gameIDParam).
+		First(&dbChar).Error
 	if err != nil {
 		return handleNotFound(c, err)
 	}
@@ -99,30 +82,14 @@ func GetCharacterByID(c *fiber.Ctx) error {
 }
 
 func SearchCharacters(c *fiber.Ctx) error {
-	type characterResponse struct {
-		ID     uint   `json:"id"`
-		Name   string `json:"name"`
-		GameID uint   `json:"game_id"`
-	}
 	requestQuery := c.Query("name")
 	dbResults := []model.Character{}
 	err := store.DB.
-		// Forgive me father for I have sinned and used ILIKE
-		// Shoutout to the postgresql gods for making this possible
 		Where("name ILIKE ?", "%"+requestQuery+"%").
 		Find(&dbResults).Error
 
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return c.Status(404).JSON(fiber.Map{
-				"error": "No characters found with query " + requestQuery,
-			})
-		} else {
-			return c.Status(500).JSON(fiber.Map{
-				"error":  "Internal server error",
-				"reason": err.Error(),
-			})
-		}
+		handleNotFound(c, err)
 	}
 
 	charactersResponse := []characterResponse{}

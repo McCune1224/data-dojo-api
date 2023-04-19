@@ -1,16 +1,15 @@
 package handler
 
 import (
-	"errors"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/mccune1224/data-dojo/api/model"
 	"github.com/mccune1224/data-dojo/api/store"
-	"gorm.io/gorm"
 )
 
-type GameResponse struct {
+// JSON response for a game
+type gameResponse struct {
 	ID           uint      `json:"id"`
 	Name         string    `gorm:"uniqueIndex" json:"name"`
 	ReleaseDate  time.Time `json:"release_date"`
@@ -21,7 +20,7 @@ type GameResponse struct {
 
 func GetAllGames(c *fiber.Ctx) error {
 	DbGames := []model.Game{}
-	gamesResponse := []GameResponse{}
+	gamesResponse := []gameResponse{}
 	error := store.DB.Find(&DbGames).Error
 	if error != nil {
 		return c.Status(500).JSON(fiber.Map{
@@ -29,7 +28,7 @@ func GetAllGames(c *fiber.Ctx) error {
 		})
 	}
 	for i := range DbGames {
-		gamesResponse = append(gamesResponse, GameResponse{
+		gamesResponse = append(gamesResponse, gameResponse{
 			ID:           DbGames[i].ID,
 			Name:         DbGames[i].Name,
 			Abbreviation: DbGames[i].Abbreviation,
@@ -62,7 +61,7 @@ func GetGameByID(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"game": GameResponse{
+		"game": gameResponse{
 			ID:           DbGame.ID,
 			Name:         DbGame.Name,
 			Abbreviation: DbGame.Abbreviation,
@@ -95,21 +94,16 @@ func SearchGames(c *fiber.Ctx) error {
 		Or("abbreviation ILIKE ?", "%"+requestQuery+"%").
 		Find(&dbResults).Error
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return c.Status(404).JSON(fiber.Map{})
-		}
-		return c.Status(500).JSON(fiber.Map{
-			"error": "Could not search games",
-		})
+		handleNotFound(c, err)
 	}
 	if dbResults == nil {
 		return c.Status(404).JSON(fiber.Map{
 			"error": "Could not find any matching",
 		})
 	}
-	gamesResponse := []GameResponse{}
+	gamesResponse := []gameResponse{}
 	for i := range dbResults {
-		gamesResponse = append(gamesResponse, GameResponse{
+		gamesResponse = append(gamesResponse, gameResponse{
 			ID:           dbResults[i].ID,
 			Name:         dbResults[i].Name,
 			Abbreviation: dbResults[i].Abbreviation,

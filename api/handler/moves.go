@@ -1,15 +1,13 @@
 package handler
 
 import (
-	"errors"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/mccune1224/data-dojo/api/model"
 	"github.com/mccune1224/data-dojo/api/store"
-	"gorm.io/gorm"
 )
 
-type MoveResponse struct {
+// JSON response for a move
+type moveResponse struct {
 	ID        uint   `json:"id"`
 	Name      string `json:"name"`
 	Input     string `json:"input"`
@@ -21,8 +19,8 @@ type MoveResponse struct {
 	OnCounter string `json:"on_counter"`
 }
 
-// Helper to drop gorm.Model fields from the response
-func (mr *MoveResponse) ModelToResponse(m model.Move) {
+// Helper to convert from gorm.Model to moveResponse (basically dropping gorm.Model fields)
+func (mr *moveResponse) ModelToResponse(m model.Move) {
 	mr.ID = m.ID
 	mr.Name = m.Name
 	mr.Input = m.Input
@@ -39,25 +37,18 @@ func GetAllMoves(c *fiber.Ctx) error {
 	// Query DB for all moves with characterID
 	charID := c.Params("characterID")
 	dbMoves := []model.Move{}
-	err := store.DB.Where("character_id = ?", charID).Find(&dbMoves).Error
+	err := store.DB.
+		Where("character_id = ?", charID).
+		Find(&dbMoves).Error
 	// Return appropriate error message if there is an error
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return c.Status(404).JSON(fiber.Map{
-				"error": "No moves found for character " + charID,
-			})
-		} else {
-			return c.Status(500).JSON(fiber.Map{
-				"error":  "Internal server error",
-				"reason": err.Error(),
-			})
-		}
+		return handleNotFound(c, err)
 	}
 
 	// Convert DB model to response model
-	moves := []MoveResponse{}
+	moves := []moveResponse{}
 	for i := range dbMoves {
-		moveResponse := MoveResponse{}
+		moveResponse := moveResponse{}
 		moveResponse.ModelToResponse(dbMoves[i])
 		moves = append(moves, moveResponse)
 	}
@@ -75,19 +66,12 @@ func GetMoveByID(c *fiber.Ctx) error {
 
 	// Query for move with matching characterID and moveID from params
 	dbMove := model.Move{}
-	err := store.DB.Where("character_id = ? AND id = ?", charID, moveID).First(&dbMove).Error
+	err := store.DB.
+		Where("character_id = ? AND id = ?", charID, moveID).
+		First(&dbMove).Error
 	// Handle errors if any
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return c.Status(404).JSON(fiber.Map{
-				"error": "No move found with id " + moveID,
-			})
-		} else {
-			return c.Status(500).JSON(fiber.Map{
-				"error":  "Internal server error",
-				"reason": err.Error(),
-			})
-		}
+		handleNotFound(c, err)
 	}
 	if dbMove.ID == 0 {
 		return c.Status(404).JSON(fiber.Map{
@@ -96,7 +80,7 @@ func GetMoveByID(c *fiber.Ctx) error {
 	}
 
 	// Convert DB model to response model
-	responseMove := MoveResponse{}
+	responseMove := moveResponse{}
 	responseMove.ModelToResponse(dbMove)
 
 	return c.JSON(fiber.Map{
@@ -105,7 +89,7 @@ func GetMoveByID(c *fiber.Ctx) error {
 }
 
 func SearchMoves(c *fiber.Ctx) error {
-	movesResponse := []MoveResponse{}
+	movesResponse := []moveResponse{}
 	requestQuery := c.Query("name")
 	if requestQuery == "" {
 		return c.Status(400).JSON(fiber.Map{
@@ -130,7 +114,7 @@ func SearchMoves(c *fiber.Ctx) error {
 		handleNotFound(c, err)
 	}
 	for i := range dbMoves {
-		newMoveResponse := MoveResponse{}
+		newMoveResponse := moveResponse{}
 		newMoveResponse.ModelToResponse(dbMoves[i])
 		movesResponse = append(movesResponse, newMoveResponse)
 	}
