@@ -20,6 +20,7 @@ func getPort() string {
 	return ":" + port
 }
 
+
 func main() {
 	// Spin up DB
 	dbConnectErr := store.Connect(os.Getenv("DB_URL"), false)
@@ -28,7 +29,6 @@ func main() {
 	}
 
 	app := fiber.New()
-
 	app.Use(logger.New())
 
 	app.Use(limiter.New(limiter.Config{

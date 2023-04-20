@@ -40,7 +40,7 @@ func APIRoutes(app *fiber.App) {
 
 	// Moves
 	moves := characters.Group(":characterID/moves")
-    moves.Get("/search", handler.SearchMoves)
+	moves.Get("/search", handler.SearchMoves)
 	moves.Get("/:id<int>", handler.GetMoveByID)
 	moves.Get("/", handler.GetAllMoves)
 }
