@@ -3,7 +3,6 @@ package handler
 import (
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/mccune1224/data-dojo/api/model"
@@ -43,7 +42,7 @@ func GetAllMoves(c *fiber.Ctx) error {
 	charID, err := c.ParamsInt("characterID")
 	if err != nil {
 		return c.Status(400).JSON(&ErrorResponse{
-			Error:             Error400String,
+			Error:            Error400String,
 			ErrorDescription: "please provide a character id",
 		})
 	}
@@ -73,14 +72,14 @@ func GetMoveByID(c *fiber.Ctx) error {
 	charID, err := c.ParamsInt("characterID")
 	if err != nil {
 		return c.Status(400).JSON(&ErrorResponse{
-			Error:             Error400String,
+			Error:            Error400String,
 			ErrorDescription: "please provide a character id",
 		})
 	}
 	moveID, err := c.ParamsInt("id")
 	if err != nil {
 		return c.Status(400).JSON(&ErrorResponse{
-			Error:             Error400String,
+			Error:            Error400String,
 			ErrorDescription: "please provide a move id",
 		})
 	}
@@ -108,10 +107,16 @@ func GetMoveByID(c *fiber.Ctx) error {
 
 func SearchMoves(c *fiber.Ctx) error {
 	// Get query params
-	requestQuery := c.Query("name")
-	limitQuery := c.Query("limit")
-	limitQueryInt, err := strconv.Atoi(limitQuery)
+	characterID, err := c.ParamsInt("characterID")
 	if err != nil {
+		return c.Status(400).JSON(&ErrorResponse{
+			Error:            Error400String,
+			ErrorDescription: "please provide a character id",
+		})
+	}
+	requestQuery := c.Query("name")
+	limitQueryInt := c.QueryInt("limit")
+	if limitQueryInt != 0 {
 		limitQueryInt = 10
 	}
 
@@ -129,10 +134,12 @@ func SearchMoves(c *fiber.Ctx) error {
 	// Query DB for all moves with characterID
 	dbMoves := []model.Move{}
 	err = store.DB.
+		Where("character_id = ?", characterID).
 		Where("name ILIKE ?", "%"+requestQuery+"%").
 		Or("input ILIKE ?", "%"+requestQuery+"%").
-		Find(&dbMoves).
+		Order("name").
 		Limit(limitQueryInt).
+		Find(&dbMoves).
 		Error
 	if err != nil {
 		return c.Status(500).JSON(Error500Response)

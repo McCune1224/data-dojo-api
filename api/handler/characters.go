@@ -2,7 +2,6 @@ package handler
 
 import (
 	"errors"
-	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/mccune1224/data-dojo/api/model"
@@ -94,9 +93,8 @@ func GetCharacterByID(c *fiber.Ctx) error {
 
 func SearchCharacters(c *fiber.Ctx) error {
 	requestQuery := c.Query("name")
-	limitQuery := c.Query("limit")
-	limitQueryInt, err := strconv.Atoi(limitQuery)
-	if err != nil {
+	limitQueryInt := c.QueryInt("limit")
+	if limitQueryInt == 0 {
 		limitQueryInt = 10
 	}
 	if requestQuery == "" {
@@ -107,10 +105,11 @@ func SearchCharacters(c *fiber.Ctx) error {
 		)
 	}
 	dbResults := []model.Character{}
-	err = store.DB.
+	err := store.DB.
 		Where("name ILIKE ?", "%"+requestQuery+"%").
-		Find(&dbResults).
+		Order("name").
 		Limit(limitQueryInt).
+		Find(&dbResults).
 		Error
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {

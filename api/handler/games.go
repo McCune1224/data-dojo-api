@@ -105,9 +105,10 @@ func SearchGames(c *fiber.Ctx) error {
 	// May god have mercy on your soul if you have to debug this (I prob will have to)
 	err = store.DB.
 		Where("name ILIKE ?", "%"+requestQuery+"%").
+		Order("name").
 		Or("abbreviation ILIKE ?", "%"+requestQuery+"%").
-		Find(&dbResults).
 		Limit(limitQueryInt).
+		Find(&dbResults).
 		Error
 	if err != nil {
 		return c.Status(500).JSON(Error500Response)
