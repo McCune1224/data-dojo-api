@@ -11,7 +11,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 # Copy the entire project to the working directory
-COPY . .
+COPY cmd/api/ api/ ./
 
 # Change the working directory to the subdirectory containing main.go
 WORKDIR /app/cmd/api
