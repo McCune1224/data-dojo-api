@@ -9,8 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/mccune1224/data-dojo/api/router"
-	"github.com/mccune1224/data-dojo/api/store"
-)
+	"github.com/mccune1224/data-dojo/api/store")
 
 func getPort() string {
 	port := os.Getenv("PORT")
@@ -23,7 +22,7 @@ func getPort() string {
 
 func main() {
 	// Spin up DB
-	dbConnectErr := store.Connect(os.Getenv("DB_URL"), false)
+	dbConnectErr := store.Connect(os.Getenv("DATABASE_URL"), false)
 	if dbConnectErr != nil {
 		panic(dbConnectErr)
 	}
