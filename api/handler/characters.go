@@ -26,14 +26,6 @@ func GetAllCharacters(c *fiber.Ctx) error {
 			ErrorDescription: "please provide a game id",
 		})
 	}
-
-	if gameID == 0 {
-		return c.Status(400).JSON(&ErrorResponse{
-			Error:            Error400String,
-			ErrorDescription: "please provide a game id",
-		})
-	}
-
 	// Search DB for all characters of associated game
 	dbChars := []model.Character{}
 	err = store.DB.

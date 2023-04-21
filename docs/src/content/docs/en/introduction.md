@@ -3,23 +3,22 @@ title: "Introduction"
 description: "Docs intro"
 ---
 
-**Welcome to Astro!**
+## Overview
 
-This is the `docs` starter template. It contains all of the features that you need to build a Markdown-powered documentation site, including:
+Welcome to the documentation page for Restful API Data Dojo, a tool for fetching fighting game information such as game details, character details, and move frame data.
 
-- ✅ **Full Markdown support**
-- ✅ **Responsive mobile-friendly design**
-- ✅ **Sidebar navigation**
-- ✅ **Search (powered by Algolia)**
-- ✅ **Multi-language i18n**
-- ✅ **Automatic table of contents**
-- ✅ **Automatic list of contributors**
-- ✅ (and, best of all) **dark mode**
+The Data Dojo Web API is a restful API with different available endpoints that will return JSON metadata about general fighting game info, characters, and moves.
 
 ## Getting Started
 
-To get started with this theme, check out the `README.md` in your new project directory. It provides documentation on how to use and customize this template for your own project. Keep the README around so that you can always refer back to it as you build.
+The API is available to all and no API key is required (currently). In order to keep request traffic at a manageable state, a rate-limiter is used.
 
-Found a missing feature that you can't live without? Please suggest it [on our Discord](https://astro.build/chat) and even consider adding it yourself on GitHub! Astro is an open source project and contributions from developers like you are how we grow!
+Detailed documentation is offered for all of our API endpoints, including examples of how to make requests and what data you can expect to receive in response. Check out `References` for further details on what endpoints are available.
 
-Good luck out there, Astronaut. 🧑‍🚀
+## API References
+
+Data Dojo offers the current functionalities:
+
+- Retrieve metadata about your favorite modern fighting game.
+- Retrieve metadata about characters.
+- Retrieve metadata about a character's frame data.
