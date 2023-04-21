@@ -14,13 +14,13 @@ RUN go mod download
 COPY cmd/api/ api/ ./
 
 # Change the working directory to the subdirectory containing main.go
-WORKDIR /app/cmd/api
+# WORKDIR /app/cmd/api
 
 # Build the application
-RUN go build -o main .
+RUN go build -o ./bin/main ./cmd/api/main.go
 
 # Expose the port your application will run on
 EXPOSE 8080
 
 # Run the application
-CMD ["/app/cmd/api/main"]
+CMD ["./bin/main"]
