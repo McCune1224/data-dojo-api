@@ -4,18 +4,12 @@ FROM golang:1.19-alpine
 # Set your working directory
 WORKDIR /app
 
-# Copy go.mod and go.sum to the working directory
+# Get the dependencies
 COPY go.mod go.sum ./
-
-# Download dependencies
 RUN go mod download
 
 # Copy the entire project to the working directory
-COPY cmd/api/ api/ ./
-
-# Change the working directory to the subdirectory containing main.go
-# WORKDIR /app/cmd/api
-
+COPY cmd/ api/ ./
 # Build the application
 RUN go build -o ./bin/main ./cmd/api/main.go
 
