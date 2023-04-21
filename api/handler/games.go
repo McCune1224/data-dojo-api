@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -37,62 +38,65 @@ func GetAllGames(c *fiber.Ctx) error {
 			Publisher:    DbGames[i].Publisher,
 		})
 	}
-	return c.JSON(fiber.Map{
-		"games": gamesResponse,
-	})
+	return c.JSON(gamesResponse)
 }
 
 func GetGameByID(c *fiber.Ctx) error {
 	gameParam := c.Params("id")
 
 	if gameParam == "" {
-		return c.Status(400).JSON(fiber.Map{
-			"error": "Please provide a game ID",
+		return c.Status(400).JSON(&ErrorResponse{
+			Error:             "bad_request",
+			Error_Description: "please provide a game id",
 		})
 	}
 
 	DbGame := model.Game{}
 	dbErr := store.DB.First(&DbGame, gameParam).Error
-	if dbErr != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"message": "Could not find game " + gameParam,
-			"error":   dbErr.Error(),
-		})
-	}
+	handleNotFound(c, dbErr)
 
-	return c.JSON(fiber.Map{
-		"game": gameResponse{
+	return c.JSON(
+		gameResponse{
 			ID:           DbGame.ID,
 			Name:         DbGame.Name,
 			Abbreviation: DbGame.Abbreviation,
 			ReleaseDate:  DbGame.ReleaseDate,
 			Developer:    DbGame.Developer,
 			Publisher:    DbGame.Publisher,
-		},
-	})
+		})
 }
 
 // SearchGames will expect a query paramter called "game" to
 // use in an ILIKE search for games of similar pattern
 func SearchGames(c *fiber.Ctx) error {
 	requestQuery := c.Query("name")
+	limitQuery := c.Query("limit")
+	limitQueryInt, err := strconv.Atoi(limitQuery)
+	if err != nil {
+		limitQueryInt = 10
+	}
+
 	if requestQuery == "" {
-		return c.Status(400).JSON(fiber.Map{
-			"error": "Please provide a search term",
-		})
+		return c.Status(400).JSON(
+			&ErrorResponse{
+				Error:             "bad_request",
+				Error_Description: "please provide a 'name' query",
+			})
 	}
 	if len(requestQuery) > 50 {
 		return c.Status(400).JSON(fiber.Map{
-			"error": "Query has limit of 50 characters",
+			"error": "query has limit of 50 characters",
 		})
 	}
 	dbResults := []model.Game{}
 	// Can be used to find a game by name or abbreviation
 	// May god have mercy on your soul if you have to debug this (I prob will have to)
-	err := store.DB.
+	err = store.DB.
 		Where("name ILIKE ?", "%"+requestQuery+"%").
 		Or("abbreviation ILIKE ?", "%"+requestQuery+"%").
-		Find(&dbResults).Error
+		Find(&dbResults).
+		Limit(limitQueryInt).
+		Error
 	if err != nil {
 		handleNotFound(c, err)
 	}
@@ -112,9 +116,5 @@ func SearchGames(c *fiber.Ctx) error {
 			Publisher:    dbResults[i].Publisher,
 		})
 	}
-	return c.JSON(fiber.Map{
-		"games": gamesResponse,
-		"query": requestQuery,
-	})
-
+	return c.JSON(gamesResponse)
 }

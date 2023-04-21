@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"strconv"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/mccune1224/data-dojo/api/model"
 	"github.com/mccune1224/data-dojo/api/store"
@@ -46,17 +48,15 @@ func GetAllMoves(c *fiber.Ctx) error {
 	}
 
 	// Convert DB model to response model
-	moves := []moveResponse{}
+	movesResp := []moveResponse{}
 	for i := range dbMoves {
 		moveResponse := moveResponse{}
 		moveResponse.ModelToResponse(dbMoves[i])
-		moves = append(moves, moveResponse)
+		movesResp = append(movesResp, moveResponse)
 	}
 
 	// Return response
-	return c.JSON(fiber.Map{
-		"moves": moves,
-	})
+	return c.JSON(movesResp)
 }
 
 // Get single move for a given character by 'characterID' and 'id' from params
@@ -80,23 +80,26 @@ func GetMoveByID(c *fiber.Ctx) error {
 	}
 
 	// Convert DB model to response model
-	responseMove := moveResponse{}
-	responseMove.ModelToResponse(dbMove)
+	moveResp := moveResponse{}
+	moveResp.ModelToResponse(dbMove)
 
-	return c.JSON(fiber.Map{
-		"move": responseMove,
-	})
+	return c.JSON(moveResp)
 }
 
 func SearchMoves(c *fiber.Ctx) error {
-	movesResponse := []moveResponse{}
+	// Get query params
 	requestQuery := c.Query("name")
+	limitQuery := c.Query("limit")
+	limitQueryInt, err := strconv.Atoi(limitQuery)
+	if err != nil {
+		limitQueryInt = 10
+	}
+
 	if requestQuery == "" {
 		return c.Status(400).JSON(fiber.Map{
 			"error": "No search query provided",
 		})
 	}
-
 	if len(requestQuery) > 20 {
 		return c.Status(400).JSON(fiber.Map{
 			"error": "Search query too long (max 20 characters)",
@@ -105,21 +108,22 @@ func SearchMoves(c *fiber.Ctx) error {
 
 	// Query DB for all moves with characterID
 	dbMoves := []model.Move{}
-	err := store.DB.
+	err = store.DB.
 		Where("name ILIKE ?", "%"+requestQuery+"%").
 		Or("input ILIKE ?", "%"+requestQuery+"%").
-		Find(&dbMoves).Error
-
+		Find(&dbMoves).
+		Limit(limitQueryInt).
+		Error
 	if err != nil {
 		handleNotFound(c, err)
 	}
+
+	// Make response JSON and return
+	movesResp := []moveResponse{}
 	for i := range dbMoves {
 		newMoveResponse := moveResponse{}
 		newMoveResponse.ModelToResponse(dbMoves[i])
-		movesResponse = append(movesResponse, newMoveResponse)
+		movesResp = append(movesResp, newMoveResponse)
 	}
-
-	return c.JSON(fiber.Map{
-		"moves": movesResponse,
-	})
+	return c.JSON(movesResp)
 }
