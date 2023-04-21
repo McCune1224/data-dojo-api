@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"errors"
 	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/mccune1224/data-dojo/api/model"
 	"github.com/mccune1224/data-dojo/api/store"
+	"gorm.io/gorm"
 )
 
 // JSON response for a game
@@ -20,14 +22,15 @@ type gameResponse struct {
 }
 
 func GetAllGames(c *fiber.Ctx) error {
+	// Query the database for all games
 	DbGames := []model.Game{}
 	gamesResponse := []gameResponse{}
 	error := store.DB.Find(&DbGames).Error
 	if error != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"error": "Could not find games",
-		})
+		return c.Status(500).JSON(Error500Response)
 	}
+
+	// Create and return games response
 	for i := range DbGames {
 		gamesResponse = append(gamesResponse, gameResponse{
 			ID:           DbGames[i].ID,
@@ -42,19 +45,28 @@ func GetAllGames(c *fiber.Ctx) error {
 }
 
 func GetGameByID(c *fiber.Ctx) error {
-	gameParam := c.Params("id")
-
-	if gameParam == "" {
+	// Get game ID from query
+	gameParam, err := c.ParamsInt("id")
+	if err != nil {
 		return c.Status(400).JSON(&ErrorResponse{
-			Error:             "bad_request",
-			Error_Description: "please provide a game id",
+			Error:            "bad_request",
+			ErrorDescription: "please provide a game id",
 		})
 	}
 
+	// Query the database for the game
 	DbGame := model.Game{}
-	dbErr := store.DB.First(&DbGame, gameParam).Error
-	handleNotFound(c, dbErr)
+	dbErr := store.DB.Where("id = ?", gameParam).First(&DbGame).Error
+	if dbErr != nil && !errors.Is(dbErr, gorm.ErrRecordNotFound) {
+		return c.Status(500).JSON(Error500Response)
+	} else if errors.Is(dbErr, gorm.ErrRecordNotFound) {
+		return c.Status(404).JSON(&ErrorResponse{
+			Error:            Error404String,
+			ErrorDescription: "Could not find game",
+		})
+	}
 
+	// Create and return game response
 	return c.JSON(
 		gameResponse{
 			ID:           DbGame.ID,
@@ -77,15 +89,15 @@ func SearchGames(c *fiber.Ctx) error {
 	}
 
 	if requestQuery == "" {
-		return c.Status(400).JSON(
-			&ErrorResponse{
-				Error:             "bad_request",
-				Error_Description: "please provide a 'name' query",
-			})
+		return c.Status(400).JSON(&ErrorResponse{
+			Error:            "bad_request",
+			ErrorDescription: "please provide a 'name' query",
+		})
 	}
-	if len(requestQuery) > 50 {
-		return c.Status(400).JSON(fiber.Map{
-			"error": "query has limit of 50 characters",
+	if len(requestQuery) > 30 {
+		return c.Status(400).JSON(&ErrorResponse{
+			Error:            Error400String,
+			ErrorDescription: "query has to be less than 30 characters",
 		})
 	}
 	dbResults := []model.Game{}
@@ -98,11 +110,12 @@ func SearchGames(c *fiber.Ctx) error {
 		Limit(limitQueryInt).
 		Error
 	if err != nil {
-		handleNotFound(c, err)
+		return c.Status(500).JSON(Error500Response)
 	}
 	if dbResults == nil {
-		return c.Status(404).JSON(fiber.Map{
-			"error": "Could not find any matching",
+		return c.Status(404).JSON(&ErrorResponse{
+			Error:            Error404String,
+			ErrorDescription: "Could not find games of similar name",
 		})
 	}
 	gamesResponse := []gameResponse{}

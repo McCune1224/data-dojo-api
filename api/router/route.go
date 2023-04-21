@@ -12,11 +12,6 @@ func BasicRoutes(app *fiber.App) {
 		return c.SendString("Hello, World!")
 	})
 
-	// Helper for showing all routes
-	app.Get("/routes", func(c *fiber.Ctx) error {
-		return c.JSON(app.GetRoutes())
-	})
-
 	// Helper for checking if the server is up
 	app.Get("/ping", func(c *fiber.Ctx) error {
 		return c.SendString("pong")
@@ -26,6 +21,10 @@ func BasicRoutes(app *fiber.App) {
 func APIRoutes(app *fiber.App) {
 	api := app.Group("/api")
 
+	// Helper for showing all routes
+	api.Get("/routes", func(c *fiber.Ctx) error {
+		return c.JSON(app.GetRoutes(false))
+	})
 	// Games
 	games := api.Group("/games")
 	games.Get("/search", handler.SearchGames)

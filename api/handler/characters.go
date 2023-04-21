@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/mccune1224/data-dojo/api/model"
 	"github.com/mccune1224/data-dojo/api/store"
+	"gorm.io/gorm"
 )
 
 // JSON response for a character
@@ -17,20 +19,34 @@ type characterResponse struct {
 
 func GetAllCharacters(c *fiber.Ctx) error {
 	// Get game ID from query
-	gameID := c.Params("gameID")
-	if gameID == "" {
-		return c.Status(400).JSON(fiber.Map{
-			"error": "Please provide a game ID",
+	gameID, err := c.ParamsInt("gameID")
+	if err != nil {
+		return c.Status(400).JSON(&ErrorResponse{
+			Error:            Error400String,
+			ErrorDescription: "please provide a game id",
+		})
+	}
+
+	if gameID == 0 {
+		return c.Status(400).JSON(&ErrorResponse{
+			Error:            Error400String,
+			ErrorDescription: "please provide a game id",
 		})
 	}
 
 	// Search DB for all characters of associated game
 	dbChars := []model.Character{}
-	err := store.DB.
+	err = store.DB.
 		Where("game_id = ?", gameID).
 		Find(&dbChars).Error
 	if err != nil {
-		return handleNotFound(c, err)
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.Status(500).JSON(Error500Response)
+		}
+		return c.Status(404).JSON(&ErrorResponse{
+			Error:            Error404String,
+			ErrorDescription: "Could not find characters",
+		})
 	}
 
 	// Create and return characters response
@@ -47,26 +63,34 @@ func GetAllCharacters(c *fiber.Ctx) error {
 
 func GetCharacterByID(c *fiber.Ctx) error {
 	// Get game and character ID from query
-	gameIDParam := c.Params("gameID")
-	if gameIDParam == "" {
-		return c.Status(400).JSON(fiber.Map{
-			"error": "Please provide a game ID",
+	gameIDParam, err := c.ParamsInt("gameID")
+	if err != nil {
+		return c.Status(400).JSON(&ErrorResponse{
+			Error:            Error400String,
+			ErrorDescription: "please provide a game id",
 		})
 	}
-	characterIDParam := c.Params("id")
-	if characterIDParam == "" {
-		return c.Status(400).JSON(fiber.Map{
-			"error": "Please provide a character ID",
+	characterIDParam, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(400).JSON(&ErrorResponse{
+			Error:            Error400String,
+			ErrorDescription: "please provide a character id",
 		})
 	}
 
 	// Search DB for character of associated game
 	dbChar := model.Character{}
-	err := store.DB.
+	err = store.DB.
 		Where("id = ? and game_id = ?", characterIDParam, gameIDParam).
 		First(&dbChar).Error
 	if err != nil {
-		return handleNotFound(c, err)
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.Status(500).JSON(Error500Response)
+		}
+		return c.Status(404).JSON(&ErrorResponse{
+			Error:            Error404String,
+			ErrorDescription: "Could not find character",
+		})
 	}
 
 	return c.JSON(&characterResponse{
@@ -84,9 +108,10 @@ func SearchCharacters(c *fiber.Ctx) error {
 		limitQueryInt = 10
 	}
 	if requestQuery == "" {
-		return c.Status(400).JSON(
-			NewErrorResponse("bad_request",
-				"Please provide a name to search for"),
+		return c.Status(400).JSON(&ErrorResponse{
+			Error:            Error400String,
+			ErrorDescription: "Please provide a name to search for",
+		},
 		)
 	}
 	dbResults := []model.Character{}
@@ -96,7 +121,13 @@ func SearchCharacters(c *fiber.Ctx) error {
 		Limit(limitQueryInt).
 		Error
 	if err != nil {
-		handleNotFound(c, err)
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.Status(500).JSON(Error500Response)
+		}
+		return c.Status(404).JSON(&ErrorResponse{
+			Error:            Error404String,
+			ErrorDescription: "Could not find characters",
+		})
 	}
 
 	charactersResponse := []characterResponse{}
