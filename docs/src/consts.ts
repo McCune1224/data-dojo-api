@@ -1,6 +1,6 @@
 export const SITE = {
-    title: "DataDojo Docs",
-    description: "Official DataDojo API Documentation",
+    title: "Data Dojo Docs",
+    description: "Official Data Dojo API Documentation",
     defaultLanguage: "en-us",
 } as const;
 
@@ -19,7 +19,7 @@ export const KNOWN_LANGUAGES = {
 } as const;
 export const KNOWN_LANGUAGE_CODES = Object.values(KNOWN_LANGUAGES);
 
-export const GITHUB_EDIT_URL = `https://github.com/McCune1224/DataDojo/tree/main/docs`;
+export const GITHUB_EDIT_URL = `https://github.com/McCune1224/data-dojo-api/tree/main/docs`;
 
 export const COMMUNITY_INVITE_URL = `https://discord.gg/hcXUjjjezw`;
 
@@ -40,8 +40,8 @@ export const SIDEBAR: Sidebar = {
         Reference: [
             { text: "Overview", link: "en/overview" },
             { text: "Games", link: "en/games/overview" },
-            { text: "Characters", link: "en/games/overview" },
-            { text: "Moves", link: "en/games/overview" },
+            { text: "Characters", link: "en/characters/overview" },
+            { text: "Moves", link: "en/moves/overview" },
         ],
     },
 };
