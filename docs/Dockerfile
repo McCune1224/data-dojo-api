@@ -20,6 +20,6 @@ RUN npm run build
 # Expose the port that the application runs on
 EXPOSE 3000
 
-# Start the application with astro
-CMD ["npm", "run", "start"]
+# Start the application with astro commands
+CMD ["npm", "run", "start", "--",  "--host" ]
 
