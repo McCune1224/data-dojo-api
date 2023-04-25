@@ -1,14 +1,13 @@
-import { defineConfig } from 'astro/config';
-import preact from '@astrojs/preact';
-import react from '@astrojs/react';
+import { defineConfig } from "astro/config";
+
+import node from "@astrojs/node";
 
 // https://astro.build/config
 export default defineConfig({
-	integrations: [
-		// Enable Preact to support Preact JSX components.
-		preact(),
-		// Enable React for the Algolia search component.
-		react(),
-	],
-	site: `https://astro.build`,
+  integrations: [],
+  site: `data-dojo-api-production-9c3d.up.railway.app`,
+  output: "server",
+  adapter: node({
+    mode: "standalone"
+  })
 });
